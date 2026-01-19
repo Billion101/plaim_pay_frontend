@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { UserPlus, User, Phone, Lock, Eye, EyeOff, Scan } from 'lucide-react'
+import { UserPlus, User, Phone, Lock, Eye, EyeOff, Fingerprint } from 'lucide-react'
 import { authAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
-import PalmScanner from '../../components/PalmScanner'
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -16,7 +15,6 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [showScanner, setShowScanner] = useState(false)
   
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -25,13 +23,6 @@ const Register: React.FC = () => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
-    })
-  }
-
-  const handlePalmScan = (palmCode: string) => {
-    setFormData({
-      ...formData,
-      plam_code: palmCode
     })
   }
 
@@ -150,24 +141,22 @@ const Register: React.FC = () => {
             {/* Palm Code Input */}
             <div>
               <label className="block text-white text-sm font-medium mb-2">
-                Palm Biometric (Optional)
+                Palm Code (Optional)
               </label>
-              <div className="flex gap-2">
+              <div className="relative">
+                <Fingerprint className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-300" size={18} />
                 <input
                   type="text"
+                  name="plam_code"
                   value={formData.plam_code}
-                  readOnly
-                  className="flex-1 px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-xl text-white placeholder-blue-200 backdrop-blur-sm"
-                  placeholder="Scan your palm"
+                  onChange={handleInputChange}
+                  className="w-full pl-12 pr-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent backdrop-blur-sm"
+                  placeholder="Enter your palm code (optional)"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowScanner(true)}
-                  className="bg-blue-500 bg-opacity-30 text-white px-4 py-3 rounded-xl hover:bg-opacity-40 flex items-center gap-2 backdrop-blur-sm border border-white border-opacity-20"
-                >
-                  <Scan size={18} />
-                </button>
               </div>
+              <p className="text-blue-200 text-xs mt-1">
+                You can add your palm code later for biometric authentication
+              </p>
             </div>
 
             {/* Error Message */}
@@ -198,13 +187,6 @@ const Register: React.FC = () => {
           </div>
         </div>
       </div>
-
-      <PalmScanner
-        isOpen={showScanner}
-        onClose={() => setShowScanner(false)}
-        onScan={handlePalmScan}
-        title="Register Palm Biometric"
-      />
     </div>
   )
 }

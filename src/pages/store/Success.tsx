@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { CheckCircle, ShoppingBag, Home, Package, CreditCard } from 'lucide-react'
+import { CheckCircle, ShoppingBag, Package, CreditCard } from 'lucide-react'
 
 const Success: React.FC = () => {
   const navigate = useNavigate()

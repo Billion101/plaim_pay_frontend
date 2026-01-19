@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ShoppingCart, Scan, Trash2, Plus, Minus, Keyboard } from 'lucide-react'
 import { useStore } from '../../contexts/StoreContext'
-import { orderAPI } from '../../services/api'
 import PalmScanner from '../../components/PalmScanner'
 
 const Checkout: React.FC = () => {
@@ -12,8 +11,6 @@ const Checkout: React.FC = () => {
   const [showScanner, setShowScanner] = useState(false)
   const [palmCode, setPalmCode] = useState('')
   const [authMethod, setAuthMethod] = useState<'manual' | 'scan'>('manual')
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [orderDetails, setOrderDetails] = useState<any>(null)
 
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('en-US').format(amount)
@@ -25,74 +22,40 @@ const Checkout: React.FC = () => {
       return
     }
 
-    await processOrder(palmCode.trim())
+    // Demo flow - just show success after manual entry
+    setIsLoading(true)
+    
+    // Store values before clearing cart
+    const totalAmount = getTotalAmount()
+    const itemCount = cart.length
+    
+    // Simulate 5 second processing
+    setTimeout(() => {
+      // Create demo order details
+      const demoOrderDetails = {
+        orderId: `ORDER_${Date.now()}`,
+        amount: totalAmount,
+        items: itemCount,
+        palmCode: palmCode.trim()
+      }
+
+      // Clear cart and navigate to success page
+      clearCart()
+      setIsLoading(false)
+      navigate('/store/success', { 
+        state: { 
+          orderDetails: demoOrderDetails
+        } 
+      })
+    }, 5000) // 5 seconds delay
   }
 
   const handleScanCheckout = () => {
     setShowScanner(true)
   }
 
-  const handlePalmScan = async (scannedPalmCode: string) => {
-    await processOrder(scannedPalmCode)
-  }
-
-  const processOrder = async (palmCodeToUse: string) => {
-    if (cart.length === 0) {
-      alert('Your cart is empty')
-      return
-    }
-
-    setIsLoading(true)
-    
-    try {
-      const orderData = {
-        amount: getTotalAmount(),
-        description: `Store purchase of ${cart.length} items`,
-        items: cart.reduce((acc, item) => {
-          acc[item.product.name] = item.quantity
-          return acc
-        }, {} as any)
-      }
-
-      // Use palm code authentication for the order
-      const response = await orderAPI.createOrderWithPalm(orderData, palmCodeToUse)
-      
-      // Store order details for success page
-      setOrderDetails({
-        orderId: response.order?.id || 'N/A',
-        amount: getTotalAmount(),
-        items: cart.length,
-        palmCode: palmCodeToUse
-      })
-
-      // Clear cart and navigate to success page
-      clearCart()
-      navigate('/store/success', { 
-        state: { 
-          orderDetails: {
-            orderId: response.order?.id || 'N/A',
-            amount: getTotalAmount(),
-            items: cart.length,
-            palmCode: palmCodeToUse
-          }
-        } 
-      })
-    } catch (error: any) {
-      console.error('Order error:', error)
-      
-      if (error.response?.data?.error === 'Insufficient balance') {
-        alert(`Insufficient balance. Current: ₭${formatAmount(error.response.data.currentBalance)}, Required: ₭${formatAmount(error.response.data.requiredAmount)}`)
-      } else if (error.response?.data?.error === 'Invalid palm code') {
-        alert('Palm verification failed. Please check your palm code or try scanning again.')
-      } else if (error.response?.data?.error === 'Palm not verified') {
-        alert('Your palm is not verified in the system. Please register your palm first.')
-      } else {
-        alert(error.response?.data?.error || 'Order failed. Please try again.')
-      }
-    } finally {
-      setIsLoading(false)
-      setShowScanner(false)
-    }
+  const handlePalmScan = async () => {
+    // This won't be called anymore since PalmScanner handles navigation directly
   }
 
   const handleScannerClose = () => {
@@ -324,13 +287,13 @@ const Checkout: React.FC = () => {
           </p>
         </div>
 
-        {/* Processing State */}
+        {/* Processing State - Only for Manual Entry */}
         {isLoading && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
             <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Processing Order</h3>
-              <p className="text-gray-600">Please wait while we process your payment...</p>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Processing Payment</h3>
+              <p className="text-gray-600">Verifying palm code...</p>
             </div>
           </div>
         )}
